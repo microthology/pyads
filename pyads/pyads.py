@@ -187,7 +187,10 @@ def adsSyncWriteReq(adr, indexGroup, indexOffset, value, plcDataType):
         pData = nData
         nLength = len(pData.value)+1       
     else:
-        nData = plcDataType(value)
+        if type(plcDataType).__name__ == 'PyCArrayType':
+            nData = plcDataType(*value)
+        else:
+            nData = plcDataType(value)
         pData = pointer(nData)
         nLength = sizeof(nData)
         
@@ -225,9 +228,14 @@ def adsSyncReadReq(adr, indexGroup, indexOffset, plcDataType):
     pData = pointer(data)  
     nLength = c_ulong(sizeof(data))    
     errCode = adsSyncReadReqFct(pAmsAddr, nIndexGroup, nIndexOffset, nLength, pData)      
+    
+    if hasattr(data,'value'):
+        dout = data.value
+    else:
+        dout = [i for i in data]
         
-    return (errCode, data.value)
-
+    return (errCode, dout)
+            
 '''
 def adsSyncAddDeviceNotificationReq(adr, indexGroup, indexOffset, noteAttrib, noteFunc, user, notification):
     adsSyncAddDeviceNotificationReq = _adsDLL.AdsSyncAddDeviceNotificationReq
